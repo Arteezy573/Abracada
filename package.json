@@ -1,0 +1,15 @@
+{
+  "name": "abracada-game",
+  "version": "1.0.0",
+  "description": "Abracada - A spell-casting board game with asymmetric information",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

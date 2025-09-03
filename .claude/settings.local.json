@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run install-all:*)",
+      "Bash(npm start)",
+      "Bash(npm run server:*)",
+      "Bash(npm run frontend:*)",
+      "Bash(npm run backend:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
