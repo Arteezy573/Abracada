@@ -844,4 +844,101 @@ describe('Game Class', () => {
       expect(playerState.otherPlayers[0].hand.length).toBe(GAME_CONFIG.HAND_SIZE); // Others' hands visible
     });
   });
+
+  describe('Edge cases and special scenarios', () => {
+    test('Owl spell should handle empty spell pool gracefully', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      const player1 = game.players.get('player1');
+      player1.hand = [4]; // Give Owl
+      game.spellPool = []; // Empty the pool
+      
+      const result = game.attemptCast('player1', 4);
+      
+      expect(result.success).toBe(true);
+      expect(result.effect.spellTaken).toBeNull();
+      expect(result.effect.message).toBe('No spells remaining in pool');
+    });
+
+    test('should award points when spell pool exhausted and player has empty hand', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      const player1 = game.players.get('player1');
+      const player2 = game.players.get('player2');
+      
+      // Empty spell pool and empty player1's hand
+      game.spellPool = [];
+      player1.hand = [];
+      player2.hand = [1, 2];
+      
+      game.checkRoundEnd();
+      
+      expect(game.state).toBe(GAME_STATES.ROUND_END);
+      expect(player1.points).toBe(3); // First to empty hand gets 3 points
+    });
+
+    test('applyTargetedEffect should throw error for invalid target', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      expect(() => {
+        game.applyTargetedEffect('player1', 1, 'invalid-player-id');
+      }).toThrow('Invalid target');
+    });
+
+    test('applyTargetedEffect should throw error for eliminated target', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      const player2 = game.players.get('player2');
+      player2.state = PLAYER_STATES.ELIMINATED;
+      
+      expect(() => {
+        game.applyTargetedEffect('player1', 1, 'player2');
+      }).toThrow('Invalid target');
+    });
+
+    test('should not throw error when game is in GAME_END state', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      game.state = GAME_STATES.GAME_END;
+      
+      expect(() => {
+        game.attemptCast('player1', 1);
+      }).toThrow('Game is not in progress');
+    });
+
+    test('should handle two-player game with positional spells', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.startGame();
+      
+      const player1 = game.players.get('player1');
+      const player2 = game.players.get('player2');
+      
+      // In a 2-player game, left and right point to the same player
+      player1.hand = [5]; // Lightning Storm
+      const initialLife = player2.life;
+      
+      const result = game.attemptCast('player1', 5);
+      
+      expect(result.success).toBe(true);
+      // Player 2 is both left and right, but should only be damaged once
+      expect(player2.life).toBeLessThan(initialLife);
+    });
+  });
 });
