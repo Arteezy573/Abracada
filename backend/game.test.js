@@ -837,11 +837,41 @@ describe('Game Class', () => {
       
       const playerState = game.getPlayerState('player1');
       
+      // CORE GAME MECHANIC: Players can see everyone else's hands but NOT their own!
+      // This is the key asymmetric information mechanic of Abracada.
       expect(playerState.player.id).toBe('player1');
-      expect(playerState.player.hand).toHaveLength(0); // Own hand is hidden
-      expect(playerState.player.handSize).toBe(GAME_CONFIG.HAND_SIZE);
+      expect(playerState.player.hand).toHaveLength(0); // Own hand is intentionally hidden
+      expect(playerState.player.handSize).toBe(GAME_CONFIG.HAND_SIZE); // But size is visible
       expect(playerState.otherPlayers).toHaveLength(1);
-      expect(playerState.otherPlayers[0].hand.length).toBe(GAME_CONFIG.HAND_SIZE); // Others' hands visible
+      expect(playerState.otherPlayers[0].hand.length).toBe(GAME_CONFIG.HAND_SIZE); // Others' hands are fully visible
+    });
+
+    test('should demonstrate asymmetric information - players see others but not themselves', () => {
+      const game = new Game();
+      game.addPlayer('player1', 'Alice');
+      game.addPlayer('player2', 'Bob');
+      game.addPlayer('player3', 'Charlie');
+      game.startGame();
+      
+      // Get each player's perspective
+      const player1View = game.getPlayerState('player1');
+      const player2View = game.getPlayerState('player2');
+      
+      // Alice sees Bob and Charlie's hands, but not her own
+      expect(player1View.player.hand).toHaveLength(0);
+      expect(player1View.otherPlayers).toHaveLength(2);
+      expect(player1View.otherPlayers.every(p => p.hand.length === GAME_CONFIG.HAND_SIZE)).toBe(true);
+      
+      // Bob sees Alice and Charlie's hands, but not his own
+      expect(player2View.player.hand).toHaveLength(0);
+      expect(player2View.otherPlayers).toHaveLength(2);
+      expect(player2View.otherPlayers.every(p => p.hand.length === GAME_CONFIG.HAND_SIZE)).toBe(true);
+      
+      // Bob can see Alice's actual spell cards
+      const aliceFromBobView = player2View.otherPlayers.find(p => p.id === 'player1');
+      expect(aliceFromBobView.hand).toBeDefined();
+      expect(aliceFromBobView.hand.length).toBe(GAME_CONFIG.HAND_SIZE);
+      expect(aliceFromBobView.hand.every(spell => spell >= 1 && spell <= 8)).toBe(true);
     });
   });
 
